@@ -1,3 +1,4 @@
+# Le code n'est pas encore terminé. Libre à toi de changer ce qu'il y a à changer
 from collections import deque
 
 def existe_chemin(tableau):
