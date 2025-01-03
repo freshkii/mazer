@@ -1,7 +1,6 @@
 from sys import exit
 from random import randint, shuffle, uniform
 from math import sqrt, cos, sin, radians
-from time import sleep
 
 bold = "\033[1m{}\033[0m"
 red = "\033[0;31m{}\033[0m"
@@ -9,10 +8,20 @@ green = "\033[0;32m{}\033[0m"
 blue = "\033[0;34m{}\033[0m"
 cyan = "\033[0;36m{}\033[0m"
 
+symbols = {
+    '#': "██",
+    's': green.format("██"),
+    'S': blue.format("██"),
+    'F': red.format("██"),
+    ' ': "  "
+}
+
 patterns = ((-1, 0), (1, 0), (0, -1), (0, 1))
+
 
 def print_error(text):
     print(red.format("error: "+text))
+
 
 class Maze:
     def __init__(self, grid: list[list[int]]):
@@ -20,52 +29,6 @@ class Maze:
         self.height = len(grid)
         self.width = len(grid[0])
         self.start, self.finish = None, None
-
-    def generate_maze(width: int, height: int):
-        grid = [[' ' for _ in range(width)] for _ in range(height)]
-        start, finish = (0, 0), (width-1, height-1)
-        grid = [[' ' for _ in range(width)] for _ in range(height)]
-        m = Maze(grid)
-        case = start
-        forbidden_cells = [start]
-        path = []
-        diago = width**2+height**2
-        while case != finish:
-            cells = m.get_patterns(case)
-            for c in cells:
-                for fc in forbidden_cells:
-                    if fc in cells:
-                        cells.remove(fc)
-                for pc in path:
-                    if pc in cells:
-                        cells.remove(pc)
-            if len(cells) == 0:
-                case = start
-                forbidden_cells = [start]
-                path = [start]
-                continue
-            proba = []
-            for c in cells:
-                dist = sqrt((c[0] - finish[0])**2+(c[1] - finish[1])**2)+1
-                proba += [c for _ in range(int(diago/dist)**2)]
-            shuffle(proba)
-            forbidden_cells += cells
-            path.append(proba[0])
-            case = proba[0]
-
-        m.start, m.finish = start, finish
-        m.grid[start[1]][start[0]] = 'S'
-        m.grid[finish[1]][finish[0]] = 'F'
-        path.append(start)
-        path.append(finish)
-
-        for y in range(height):
-            for _ in range(randint(2*width//3, width-1)):
-                x = randint(0, width-1)
-                if (x, y) not in path:
-                    m.grid[y][x] = '#'
-
-        return m
 
     def set_start_finish(self, start, finish):
         self.grid[start[1]][start[0]] = 'S'
@@ -76,17 +39,10 @@ class Maze:
     def print(self, solution=False):
         for row in self.grid:
             for cell in row:
-                if solution:
-                    if cell == '#': print("██",end='')
-                    elif cell == 's': print(green.format("██"),end='')
-                    elif cell == 'S': print(blue.format("██"),end='')
-                    elif cell == 'F': print(red.format("██"),end='')
-                    else: print("  ", end='')
+                if cell == 's' and not solution:
+                    print(symbols[' '], end='')
                 else:
-                    if cell == '#': print("██",end='')
-                    elif cell == 'S': print(blue.format("██"), end='')
-                    elif cell == 'F': print(red.format("██"),end='')
-                    else: print("  ", end='')
+                    print(symbols[cell], end='')
             print()
 
     def get_cell(self, cell: tuple[int]) -> str | int:
@@ -103,7 +59,10 @@ class Maze:
                 output.append(cords)
         return output
 
-    def solve(self):
+    def solve(self) -> bool:
+        """
+        Returns True if a solution exists, False otherwise
+        """
         from collections import deque
         queue = deque([self.start])
         visited = set()
@@ -112,22 +71,71 @@ class Maze:
         while queue:
             current = queue.popleft()
             if current == self.finish:
-                path = []
-                while current:
-                    path.append(current)
+                while current != self.start:
+                    self.grid[current[1]][current[0]] = 's'
                     current = parent[current]
-                path.reverse()
-                for cell in path:
-                    self.grid[cell[1]][cell[0]] = 's'
-                return path
+                self.grid[current[1]][current[0]] = 's'
+                return True
 
             for neighbor in self.get_patterns(current):
                 if neighbor not in visited:
                     visited.add(neighbor)
                     parent[neighbor] = current
                     queue.append(neighbor)
+        return False
 
-        return None
+
+def generate_maze(width: int, height: int):
+    """
+    :param width: width of the maze grid
+    :param height: height of the maze grid
+    Returns a Maze object with walls, start and finish of the specified dimensions
+    """
+    grid = [[' ' for _ in range(width)] for _ in range(height)]
+    start, finish = (0, 0), (width-1, height-1)
+    grid = [[' ' for _ in range(width)] for _ in range(height)]
+    m = Maze(grid)
+    case = start
+    forbidden_cells = [start]
+    path = []
+    diago = width**2+height**2
+    while case != finish:
+        cells = m.get_patterns(case)
+        for c in cells:
+            for fc in forbidden_cells:
+                if fc in cells:
+                    cells.remove(fc)
+            for pc in path:
+                if pc in cells:
+                    cells.remove(pc)
+        if len(cells) == 0:
+            case = start
+            forbidden_cells = [start]
+            path = [start]
+            continue
+        proba = []
+        for c in cells:
+            dist = sqrt((c[0] - finish[0])**2+(c[1] - finish[1])**2)+1
+            proba += [c for _ in range(int(diago/dist)**2)]
+        shuffle(proba)
+        forbidden_cells += cells
+        path.append(proba[0])
+        case = proba[0]
+
+    m.start, m.finish = start, finish
+    m.grid[start[1]][start[0]] = 'S'
+    m.grid[finish[1]][finish[0]] = 'F'
+    path.append(start)
+    path.append(finish)
+
+    for y in range(height):
+        for _ in range(randint(2*width//3, width-1)):
+            x = randint(0, width-1)
+            if (x, y) not in path:
+                m.grid[y][x] = '#'
+
+    return m
+
 
 def generate_walls_from_center(maze, center, radius, num_walls, noise_level):
     """
@@ -147,19 +155,21 @@ def generate_walls_from_center(maze, center, radius, num_walls, noise_level):
         if maze.cell_valid((x, y)):
             maze.grid[y][x] = '#'
 
+
 def generate_maze_with_cosinus(width: int, height: int):
     grid = [[' ' for _ in range(width)] for _ in range(height)]
     start, finish = (0, 0), (width-1, height-1)
     center = (width // 2, height // 2)
     radius = min(width, height) // 3
-    num_walls = 90  # Nombre de murs à générer
-    noise_level = 5  # Niveau de bruit à ajouter aux positions des murs
+    num_walls = width*height // 3
+    noise_level = 5
 
     m = Maze(grid)
     generate_walls_from_center(m, center, radius, num_walls, noise_level)
 
     m.set_start_finish(start, finish)
     return m
+
 
 def get_input(input_func, retry_text=None):
     while True:
@@ -175,6 +185,7 @@ def get_input(input_func, retry_text=None):
         except KeyboardInterrupt:
             print("\nInterruption")
             exit(0)
+
 
 def input_user_maze():
     try:
@@ -199,6 +210,7 @@ def input_user_maze():
 
     return Maze(grid)
 
+
 def main():
     title = bold.format("Maze solver")
     print(green.format("┌─────────────┐"))
@@ -219,12 +231,12 @@ def main():
         maze = generate_maze_with_cosinus(20, 20)
         maze.print()
 
-    solution = maze.solve()
-    if solution:
+    if maze.solve():
         print("\nSolution found:")
         maze.print(solution=True)
     else:
         print("\nNo solution found.")
+
 
 if __name__ == "__main__":
     try:
