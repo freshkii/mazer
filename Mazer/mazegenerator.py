@@ -15,8 +15,7 @@ class MazeGenerator:
         for y in range(self.height):
             for _ in range(randint(1, self.width - 1)):
                 x = randint(0, self.width - 1)
-                if (x, y) not in [start, finish]:
-                    grid[y][x] = WALL
+                grid[y][x] = WALL
 
         # on vérifie que l'entrée et la sortie sont vides
         grid[start[1]][start[0]] = EMPTY
