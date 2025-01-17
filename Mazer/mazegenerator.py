@@ -13,7 +13,7 @@ class MazeGenerator:
 
         # On génére les murs
         for y in range(self.height):
-            for _ in range(randint(2 * self.width // 3, self.width - 1)):
+            for _ in range(randint(1, self.width - 1)):
                 x = randint(0, self.width - 1)
                 if (x, y) not in [start, finish]:
                     grid[y][x] = WALL
