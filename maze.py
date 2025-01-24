@@ -13,7 +13,10 @@ class Maze:
         x, y = coord
         return 0 <= x < self.width and 0 <= y < self.height and self.grid[y][x] == EMPTY
 
-    def print(self) -> None:
-        # Affichage du labyrinthe
-        for row in self.grid:
-            print(''.join(['██' if cell == WALL else '  ' for cell in row]))
+    def __str__(self) -> str:
+        border = '██' * (self.width + 2)
+        grid_rows = [
+            '██' + ''.join('██' if cell == WALL else '  ' for cell in row) + '██'
+            for row in self.grid
+        ]
+        return '\n'.join([border] + grid_rows + [border])
