@@ -14,15 +14,9 @@ class Maze:
         return 0 <= x < self.width and 0 <= y < self.height and self.grid[y][x] == EMPTY
 
     def __str__(self) -> str:
-<<<<<<< Updated upstream
         border = '██' * (self.width + 2)
         grid_rows = [
             '██' + ''.join('██' if cell == WALL else '  ' for cell in row) + '██'
             for row in self.grid
         ]
         return '\n'.join([border] + grid_rows + [border])
-=======
-        return '\n'.join(
-                ''.join('██' if cell == WALL else '  ' for cell in row) for row in self.grid
-                )
->>>>>>> Stashed changes
